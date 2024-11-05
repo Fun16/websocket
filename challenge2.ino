@@ -1,13 +1,14 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.h>
 
 // WiFi credentials
 const char* ssid = "ALX The Piano 01";
 const char* password = "Thepiano01";
 
 // GPIO Pins for LEDs
-const int ledPin1 = 3;  // LED 1 on GPIO 2
+const int ledPin1 = 3;  // LED 1 on GPIO 3
 const int ledPin2 = 4;  // LED 2 on GPIO 4
 
 // Web server and WebSocket setup
@@ -21,6 +22,9 @@ const int pwmFreq = 5000;
 const int pwmChannel1 = 0;
 const int pwmChannel2 = 1;
 const int pwmResolution = 8;  // 8-bit resolution, values from 0-255
+
+// Store IP address globally
+String ipAddress;
 
 // HTML page with sliders
 const char index_html[] PROGMEM = R"rawliteral(
@@ -36,6 +40,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 </head>
 <body>
   <h2>LED Brightness Control</h2>
+  <p>IP Address: <span id="ipAddress">%IP_ADDRESS%</span></p>
   <p>LED 1 Brightness: <span id="brightness1">%BRIGHTNESS1%</span></p>
   <input type="range" id="slider1" min="0" max="255" class="slider" value="%BRIGHTNESS1%" onchange="updateBrightness(1, this.value)">
   
@@ -119,6 +124,7 @@ void initWebSocket() {
 
 // Placeholder to process HTML variables
 String processor(const String& var) {
+  if (var == "IP_ADDRESS") return ipAddress;  // Provide IP address
   if (var == "BRIGHTNESS1") return String(ledBrightness1);
   if (var == "BRIGHTNESS2") return String(ledBrightness2);
   return String();
@@ -133,7 +139,12 @@ void setup() {
     delay(1000);
     Serial.println("Connecting to WiFi...");
   }
-  Serial.println(WiFi.localIP());
+  Serial.println("Connected to WiFi!");
+  
+  // Store IP address
+  ipAddress = WiFi.localIP().toString();
+  Serial.print("IP address: ");
+  Serial.println(ipAddress);
 
   // PWM setup
   ledcSetup(pwmChannel1, pwmFreq, pwmResolution);
@@ -159,4 +170,3 @@ void setup() {
 void loop() {
   ws.cleanupClients();
 }
-
